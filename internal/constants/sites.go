@@ -21,6 +21,7 @@ var allSites = []string{
 	// PyPyDance
 	"jd.pypy.moe",
 	"api.pypy.dance",
+	"cdn.pypy.dance",
 	// WannaDance
 	"api.udon.dance",
 	"api.wannadance.online",

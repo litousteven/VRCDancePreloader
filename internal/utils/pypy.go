@@ -16,6 +16,12 @@ func GetPyPyVideoUrl(id int) string {
 	return fmt.Sprintf("http://api.pypy.dance/video?id=%d", id)
 }
 
+// GetPyPyCdnUrlByYoutubeId builds the CDN url of a mirrored video.
+// PyPyDance names the mirrored file after the original YouTube video id.
+func GetPyPyCdnUrlByYoutubeId(videoID string) string {
+	return fmt.Sprintf("https://cdn.pypy.dance/%s.mp4", videoID)
+}
+
 func GetPyPyThumbnailUrl(id int) string {
 	return fmt.Sprintf("https://api.pypy.dance/thumb?id=%d", id)
 }

@@ -15,11 +15,17 @@ var ErrNotSupported = errors.New("video is not currently supported")
 
 func NewEntry(id string) Entry {
 	if num, ok := utils.CheckIdIsPyPy(id); ok {
-		return newUrlBasedEntry(id, requesting.GetClient(requesting.PyPyDance), func(ctx context.Context) (*RemoteVideoInfo, error) {
+		entry := newUrlBasedEntry(id, requesting.GetClient(requesting.PyPyDance), func(ctx context.Context) (*RemoteVideoInfo, error) {
 			return &RemoteVideoInfo{
 				FinalUrl: utils.GetPyPyVideoUrl(num),
 			}, nil
 		})
+		// PyPyDance redirects some songs to YouTube instead of its CDN, but the
+		// mirrored file is still served under the original YouTube video id.
+		entry.youtubeFallback = func(videoID string) (string, bool) {
+			return utils.GetPyPyCdnUrlByYoutubeId(videoID), true
+		}
+		return entry
 	}
 	if num, ok := utils.CheckIdIsWanna(id); ok {
 		return newUrlBasedEntry(id, requesting.GetClient(requesting.WannaDance), func(ctx context.Context) (*RemoteVideoInfo, error) {

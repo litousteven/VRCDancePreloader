@@ -15,6 +15,9 @@ type UrlBasedEntry struct {
 
 	resolvedUrl       string
 	initialInfoGetter func(ctx context.Context) (*RemoteVideoInfo, error)
+	// youtubeFallback optionally translates a YouTube video id into a directly
+	// downloadable url. It is used when the source redirects to YouTube.
+	youtubeFallback func(videoID string) (string, bool)
 
 	remoteModTime time.Time
 	remoteSize    int64
@@ -41,15 +44,29 @@ func (e *UrlBasedEntry) resolveRemoteMedia(ctx context.Context) error {
 		e.remoteModTime = info.LastModified
 	}
 
+	fallbackTried := false
 	for {
-		if _, ok := utils.CheckYoutubeURL(url); ok {
+		if videoID, ok := utils.CheckYoutubeURL(url); ok {
+			if !fallbackTried && e.youtubeFallback != nil {
+				if altURL, ok := e.youtubeFallback(videoID); ok && altURL != "" {
+					e.logger.WarnLn("Source is YouTube-only, trying fallback:", altURL)
+					url = altURL
+					fallbackTried = true
+					continue
+				}
+			}
 			// TODO youtube handler
 			return ErrNotSupported
 		}
 		info, err = e.requestHttpResInfo(url, ctx)
 		if err != nil {
+			if fallbackTried {
+				e.logger.WarnLn("Fallback url is not available:", err)
+				return ErrNotSupported
+			}
 			return err
 		}
+		fallbackTried = false
 		changed := info.FinalUrl != url
 		url = info.FinalUrl
 
